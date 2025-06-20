@@ -118,6 +118,7 @@
 | `title`         | `VARCHAR(255)`  | Название дрона (NOT NULL)            |
 | `description`   | `TEXT`          | Описание дрона                       |
 | `hull_number`   | `VARCHAR(100)`  | Серийный номер (NOT NULL, UNIQUE)    |
+|  `photo` | `Bytes`| Фото дрона|
 | `file_id`       | `UUID`          | Внешний ключ к `file.id`             |
 | `owner_id`      | `UUID`          | Внешний ключ к `user.id`             |
 | `created_at`    | `TIMESTAMP`     | Дата создания (DEFAULT: `NOW()`)     |
