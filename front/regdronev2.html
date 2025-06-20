@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Регистрация БПЛА</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
+    <style>
+        /* Стили тулбара */
+        :root {
+            --primary-color: #1a73e8;
+            --hover-color: #1557b0;
+            --text-color: #ffffff;
+        }
+
+        .toolbar {
+            background: var(--primary-color);
+            padding: 1rem 2rem;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .nav-items {
+            display: flex;
+            gap: 2rem;
+        }
+
+        .nav-items a {
+            color: var(--text-color);
+            text-decoration: none;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            transition: all 0.3s;
+        }
+
+        .nav-items a:hover {
+            background: rgba(255,255,255,0.15);
+        }
+
+        .profile-menu {
+            position: relative;
+            cursor: pointer;
+        }
+
+        .profile-toggle {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            color: var(--text-color);
+        }
+
+        /* Остальные стили формы */
+        .registration-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .registration-container {
+            max-width: 600px;
+            margin: 2rem auto;
+            padding: 2rem;
+            background: #f8f9fa;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #2c3e50;
+            font-weight: 500;
+        }
+
+        select, input, textarea {
+            width: 100%;
+            padding: 0.8rem;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s ease;
+        }
+
+        select:focus, 
+        input:focus, 
+        textarea:focus {
+            border-color: #3498db;
+            outline: none;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .submit-btn {
+            background: #3498db;
+            color: white;
+            padding: 1rem 2rem;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 1rem;
+            transition: background 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: #2980b9;
+        }
+
+        .model-select {
+            background-image: url('data:image/svg+xml;utf8,<svg ... />');
+            background-repeat: no-repeat;
+            background-position: right 0.7rem top 50%;
+            background-size: 12px auto;
+        }
+
+        .file-upload {
+            position: relative;
+            margin-bottom: 1.5rem;
+        }
+
+        .file-upload-input {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0;
+            cursor: pointer;
+        }
+
+        .file-upload-label {
+            display: block;
+            padding: 1.5rem;
+            border: 2px dashed #e0e0e0;
+            border-radius: 6px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .file-upload-label:hover {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .preview-container {
+            margin-top: 1rem;
+            text-align: center;
+        }
+
+        .preview-image {
+            max-width: 200px;
+            max-height: 200px;
+            border-radius: 6px;
+            object-fit: cover;
+            display: none;
+        }
+
+        .remove-photo {
+            color: #e74c3c;
+            cursor: pointer;
+            margin-top: 0.5rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Тулбар -->
+    <nav class="toolbar">
+        <div class="nav-items">
+            <a href="/register-drone">Домой</a>
+            <a href="/create-route">Создать маршрут</a>
+        </div>
+        
+        <div class="profile-menu">
+            <div class="profile-toggle">
+                <span>Иван Иванов</span>
+                <i class="bi bi-person-circle"></i>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <div class="registration-container">
+        <h2>Регистрация нового БПЛА</h2>
+        <form id="drone-registration-form">
+
+            <div class="form-group">
+                <label>Фото дрона:</label>
+                <div class="file-upload">
+                    <input type="file" 
+                           id="photo-upload" 
+                           class="file-upload-input" 
+                           accept="image/*"
+                           required>
+                    <label for="photo-upload" class="file-upload-label">
+                        <i class="bi bi-camera fs-4"></i><br>
+                        <span>Нажмите для загрузки фото</span>
+                    </label>
+                    <div class="preview-container">
+                        <img src="#" alt="Preview" class="preview-image">
+                        <div class="remove-photo" onclick="removePhoto()">
+                            <i class="bi bi-trash"></i> Удалить фото
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Поле выбора модели -->
+            <div class="form-group">
+                <label for="model-select">Модель дрона:</label>
+                <select id="model-select" class="model-select" required>
+                    <option value="">Выберите модель</option>
+                    <option value="DJI_Mavic_3">DJI Mavic 3</option>
+                    <option value="Parrot_Anafi">Parrot Anafi</option>
+                    <option value="Autel_EVO_Lite">Autel EVO Lite</option>
+                    <option value="Yuneec_H520">Yuneec H520</option>
+                    <option value="other">Другая модель</option>
+                </select>
+            </div>
+
+            <!-- Поле ввода имени -->
+            <div class="form-group">
+                <label for="drone-name">Именование дрона:</label>
+                <input 
+                    type="text" 
+                    id="drone-name" 
+                    placeholder="Введите уникальное имя"
+                    required
+                    pattern="[A-Za-zА-Яа-я0-9\s]{3,20}"
+                    title="От 3 до 20 символов (буквы, цифры, пробелы)">
+            </div>
+
+            <!-- Поле описания -->
+            <div class="form-group">
+                <label for="drone-description">Описание:</label>
+                <textarea 
+                    id="drone-description" 
+                    placeholder="Опишите особенности вашего дрона (модификации, установленное оборудование)"
+                    maxlength="500"></textarea>
+                <div class="char-counter"><span id="char-count">0</span>/500</div>
+            </div>
+
+            <button type="submit" class="submit-btn">Зарегистрировать</button>
+        </form>
+    </div>
+
+    <script>
+        // Существующий код формы
+        const form = document.getElementById('drone-registration-form');
+        // ... остальной JavaScript код ...
+    </script>
+</body>
+</html>

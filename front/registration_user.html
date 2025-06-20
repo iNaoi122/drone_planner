@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация пользователя</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        .registration-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            color: #1a73e8;
+            margin-bottom: 1.5rem;
+            text-align: center;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #5f6368;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #dadce0;
+            border-radius: 5px;
+            font-size: 1rem;
+            transition: border-color 0.2s;
+        }
+
+        input:focus {
+            border-color: #1a73e8;
+            outline: none;
+        }
+
+        .error-message {
+            color: #d93025;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #1a73e8;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        button:hover {
+            background: #1557b0;
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <h2>Регистрация пользователя</h2>
+        <form id="registrationForm">
+            <div class="form-group">
+                <label for="fullname">ФИО:</label>
+                <input 
+                    type="text" 
+                    id="fullname" 
+                    placeholder="Иванов Иван Иванович"
+                    required
+                    pattern="[А-Яа-яЁё\s]{5,50}"
+                    title="Введите полное ФИО кириллицей">
+                <div class="error-message" id="nameError">Некорректное ФИО</div>
+            </div>
+
+            <div class="form-group">
+                <label for="document">Номер документа:</label>
+                <input 
+                    type="text" 
+                    id="document" 
+                    placeholder="12345678"
+                    required
+                    pattern="\d{8}"
+                    title="8 цифр без пробелов">
+                <div class="error-message" id="docError">Требуется 8 цифр</div>
+            </div>
+
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </div>
+
+    <script>
+        const form = document.getElementById('registrationForm');
+        const nameInput = document.getElementById('fullname');
+        const docInput = document.getElementById('document');
+        const nameError = document.getElementById('nameError');
+        const docError = document.getElementById('docError');
+
+        // Валидация в реальном времени
+        nameInput.addEventListener('input', () => {
+            const isValid = /^[А-Яа-яЁё\s]{5,50}$/.test(nameInput.value);
+            nameError.style.display = isValid ? 'none' : 'block';
+        });
+
+        docInput.addEventListener('input', () => {
+            const isValid = /^\d{8}$/.test(docInput.value);
+            docError.style.display = isValid ? 'none' : 'block';
+        });
+
+        // Обработка отправки формы
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            const formData = {
+                fullname: nameInput.value.trim(),
+                document: docInput.value.trim()
+            };
+
+            // Проверка валидности
+            const isNameValid = /^[А-Яа-яЁё\s]{5,50}$/.test(formData.fullname);
+            const isDocValid = /^\d{8}$/.test(formData.document);
+
+            if(!isNameValid || !isDocValid) {
+                alert('Пожалуйста, заполните все поля корректно!');
+                return;
+            }
+
+            // Эмуляция отправки данных
+            console.log('Отправка данных:', formData);
+            alert('Регистрация успешно завершена!');
+            form.reset();
+        });
+    </script>
+</body>
+</html>

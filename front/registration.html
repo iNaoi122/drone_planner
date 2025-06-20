@@ -1,0 +1,243 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Регистрация пользователя</title>
+    <style>
+        /* Сохраняем предыдущие стили */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            background-color: #f0f2f5;
+        }
+
+        .registration-container {
+            background: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 400px;
+        }
+
+        h2 {
+            color: #2c3e50;
+            text-align: center;
+            margin-bottom: 2rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            color: #5f6368;
+            font-weight: 500;
+        }
+
+        input {
+            width: 100%;
+            padding: 0.75rem;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            font-size: 1rem;
+            transition: border-color 0.3s;
+        }
+
+        /* Изменения для вертикального расположения */
+        .name-group {
+            display: block; /* Убираем grid */
+        }
+
+        .name-group .form-group {
+            margin-bottom: 1rem; /* Увеличиваем отступ между полями */
+        }
+
+        /* Остальные стили остаются без изменений */
+        button {
+            width: 100%;
+            padding: 0.75rem;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        button:hover {
+            background: #2980b9;
+        }
+
+        .error-message {
+            color: #e74c3c;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .password-match {
+            color: #2ecc71;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="registration-container">
+        <h2>Регистрация нового пользователя</h2>
+        <form id="registrationForm">
+            <div class="name-group">
+                <div class="form-group">
+                    <label for="lastname">Фамилия</label>
+                    <input 
+                        type="text" 
+                        id="lastname" 
+                        required
+                        pattern="[А-Яа-яЁё]+"
+                        title="Только кириллические символы">
+                </div>
+                
+                <div class="form-group">
+                    <label for="firstname">Имя</label>
+                    <input 
+                        type="text" 
+                        id="firstname" 
+                        required
+                        pattern="[А-Яа-яЁё]+"
+                        title="Только кириллические символы">
+                </div>
+
+                <div class="form-group">
+                    <label for="middlename">Отчество</label>
+                    <input 
+                        type="text" 
+                        id="middlename" 
+                        pattern="[А-Яа-яЁё]+"
+                        title="Только кириллические символы">
+                </div>
+            </div>
+
+            <!-- Остальные поля без изменений -->
+            <div class="form-group">
+                <label for="age">Возраст</label>
+                <input 
+                    type="number" 
+                    id="age" 
+                    min="18"
+                    max="120"
+                    required
+                    placeholder="18">
+                <div class="error-message" id="ageError">Минимальный возраст - 18 лет</div>
+            </div>
+
+            <div class="form-group">
+                <label for="document">Номер документа</label>
+                <input 
+                    type="text" 
+                    id="document" 
+                    required
+                    pattern="\d{8}"
+                    title="8 цифр без пробелов"
+                    placeholder="12345678">
+                <div class="error-message" id="docError">Требуется 8 цифр</div>
+            </div>
+
+            <div class="form-group">
+                <label for="password">Пароль</label>
+                <input 
+                    type="password" 
+                    id="password" 
+                    required
+                    minlength="6"
+                    placeholder="••••••••">
+            </div>
+
+            <div class="form-group">
+                <label for="confirmPassword">Повторите пароль</label>
+                <input 
+                    type="password" 
+                    id="confirmPassword" 
+                    required
+                    placeholder="••••••••">
+                <div class="error-message" id="passError">Пароли не совпадают</div>
+                <div class="password-match" id="passMatch">✓ Пароли совпадают</div>
+            </div>
+
+            <button type="submit">Зарегистрироваться</button>
+        </form>
+    </div>
+
+    <!-- Скрипт остается без изменений -->
+    <script>
+        const form = document.getElementById('registrationForm');
+        const password = document.getElementById('password');
+        const confirmPassword = document.getElementById('confirmPassword');
+        const ageInput = document.getElementById('age');
+
+        function validatePasswords() {
+            const passError = document.getElementById('passError');
+            const passMatch = document.getElementById('passMatch');
+            
+            if(password.value !== confirmPassword.value) {
+                passError.style.display = 'block';
+                passMatch.style.display = 'none';
+                return false;
+            } else {
+                passError.style.display = 'none';
+                passMatch.style.display = 'block';
+                return true;
+            }
+        }
+
+        function validateAge() {
+            const ageError = document.getElementById('ageError');
+            if(ageInput.value < 18) {
+                ageError.style.display = 'block';
+                return false;
+            }
+            ageError.style.display = 'none';
+            return true;
+        }
+
+        confirmPassword.addEventListener('input', validatePasswords);
+        password.addEventListener('input', validatePasswords);
+        ageInput.addEventListener('input', validateAge);
+
+        form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            
+            if(!validateAge() || !validatePasswords()) {
+                alert('Исправьте ошибки в форме!');
+                return;
+            }
+
+            if(!form.checkValidity()) {
+                alert('Заполните все обязательные поля!');
+                return;
+            }
+
+            console.log({
+                lastName: document.getElementById('lastname').value,
+                firstName: document.getElementById('firstname').value,
+                middleName: document.getElementById('middlename').value,
+                age: ageInput.value,
+                document: document.getElementById('document').value,
+                password: password.value
+            });
+            
+            alert('Регистрация успешно завершена!');
+            form.reset();
+        });
+    </script>
+</body>
+</html>

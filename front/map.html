@@ -1,0 +1,148 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Планировщик маршрутов БПЛА</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
+    <style>
+        #map {
+            height: 500px;
+            width: 100%;
+            margin: 20px 0;
+            border-radius: 8px;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.3);
+        }
+        .control-panel {
+            padding: 15px;
+            background: #f5f5f5;
+            border-radius: 8px;
+        }
+        button {
+            padding: 10px 25px;
+            background: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        button:hover {
+            background: #1976D2;
+        }
+    </style>
+</head>
+<body>
+    <div class="control-panel">
+        <h2>Планирование маршрута</h2>
+        <div id="map"></div>
+        <button onclick="confirmSelection()">Подтвердить маршрут</button>
+        <div id="coordinates"></div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script>
+        // Инициализация карты
+        const map = L.map('map').setView([55.751244, 37.618423], 11);
+        let markers = [];
+        let storedPoints = JSON.parse(sessionStorage.getItem('routePoints')) || [];
+    
+        // Восстановление точек при загрузке
+        function restorePoints() {
+            storedPoints.forEach(point => {
+                const marker = createMarker(point.lat, point.lng);
+                marker.addTo(map);
+                markers.push(marker);
+            });
+            updateCoordinateDisplay();
+        }
+    
+        // Создание маркера с обработчиками
+        function createMarker(lat, lng) {
+            const marker = L.marker([lat, lng], {
+                draggable: true,
+                icon: L.icon({
+                    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
+                    iconSize: [25, 41]
+                })
+            });
+    
+            // Обработчик клика по маркеру
+            marker.on('click', function(e) {
+                const index = markers.findIndex(m => 
+                    m.getLatLng().lat === e.latlng.lat && 
+                    m.getLatLng().lng === e.latlng.lng
+                );
+                
+                map.removeLayer(markers[index]);
+                markers.splice(index, 1);
+                storedPoints.splice(index, 1);
+                
+                sessionStorage.setItem('routePoints', JSON.stringify(storedPoints));
+                updateCoordinateDisplay();
+            });
+    
+            // Обработчик перемещения маркера
+            marker.on('dragend', function(e) {
+                const index = markers.indexOf(e.target);
+                storedPoints[index] = e.target.getLatLng();
+                sessionStorage.setItem('routePoints', JSON.stringify(storedPoints));
+                updateCoordinateDisplay();
+            });
+    
+            return marker;
+        }
+    
+        // Обработчик клика по карте
+        map.on('click', function(e) {
+            const newMarker = createMarker(e.latlng.lat, e.latlng.lng);
+            newMarker.addTo(map);
+            markers.push(newMarker);
+            storedPoints.push(e.latlng);
+            sessionStorage.setItem('routePoints', JSON.stringify(storedPoints));
+            updateCoordinateDisplay();
+        });
+    
+        // Обновление отображения координат
+        function updateCoordinateDisplay() {
+            const coordList = storedPoints.map((point, index) => 
+                `${index+1}. Широта: ${point.lat.toFixed(6)}, Долгота: ${point.lng.toFixed(6)}`
+            ).join('<br>');
+            
+            document.getElementById('coordinates').innerHTML = 
+                `Выбранные точки:<br>${coordList || 'Нет выбранных точек'}`;
+        }
+    
+        // Отправка данных
+        async function confirmSelection() {
+            if(storedPoints.length === 0) {
+                alert("Выберите хотя бы одну точку!");
+                return;
+            }
+    
+            try {
+                const response = await fetch('/api/save-route', {
+                    method: 'POST',
+                    headers: {'Content-Type': 'application/json'},
+                    body: JSON.stringify({
+                        route: storedPoints,
+                        deviceId: sessionStorage.getItem('deviceId')
+                    })
+                });
+    
+                if(response.ok) {
+                    sessionStorage.removeItem('routePoints');
+                    markers.forEach(m => map.removeLayer(m));
+                    markers = [];
+                    storedPoints = [];
+                    alert('Маршрут успешно сохранен!');
+                }
+            } catch (error) {
+                console.error('Ошибка:', error);
+            }
+        }
+    
+        // Инициализация при загрузке
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+        restorePoints();
+    </script>
+</body>
+</html>

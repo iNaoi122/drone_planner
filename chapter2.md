@@ -77,18 +77,19 @@
 | `title` | `VARCHAR(50)` | Название роли (NOT NULL)  |
 
 ### Таблица **User**
-| Атрибут          | Тип данных       | Описание                                |
-|-------------------|------------------|----------------------------------------|
-| `id`             | `UUID`           | Первичный ключ                         |
-| `first_name`     | `VARCHAR(255)`   | Имя (NOT NULL)                         |
-| `middle_name`    | `VARCHAR(255)`   | Отчество                               |
-| `last_name`      | `VARCHAR(255)`   | Фамилия (NOT NULL)                     |
-| `login`          | `VARCHAR(255)`   | Уникальный логин (NOT NULL, UNIQUE)    |
-| `password`       | `VARCHAR(255)`   | Пароль (NOT NULL)                      |
-| `age`            | `INT`            | Возраст (CHECK: `age >= 0`)            |
-| `role_id`        | `UUID`           | Внешний ключ к `role.id`               |
-| `id_card`        | `UUID`           | Идентификатор документа                |
-| `created_at`     | `TIMESTAMP`      | Дата создания (DEFAULT: `NOW()`)       |
+| Атрибут          | Тип данных     | Описание                            |
+|------------------|----------------|-------------------------------------|
+| `id`             | `UUID`         | Первичный ключ                      |
+| `first_name`     | `VARCHAR(255)` | Имя (NOT NULL)                      |
+| `middle_name`    | `VARCHAR(255)` | Отчество                            |
+| `last_name`      | `VARCHAR(255)` | Фамилия (NOT NULL)                  |
+| `login`          | `VARCHAR(255)` | Уникальный логин (NOT NULL, UNIQUE) |
+| `password`       | `VARCHAR(255)` | Пароль (NOT NULL)                   |
+| `age`            | `INT`          | Возраст (CHECK: `age >= 0`)         |
+| `role_id`        | `UUID`         | Внешний ключ к `role.id`            |
+| `id_card_series` | `INT`          | Серия паспорта                      |
+| `id_card_number` | `INT`          |Номер паспорта
+| `created_at`     | `TIMESTAMP`    | Дата создания (DEFAULT: `NOW()`)    |
 
 ### Таблица **Model**
 | Атрибут        | Тип данных     | Описание                              |
@@ -107,7 +108,6 @@
 | `title`         | `VARCHAR(255)`  | Название файла                       |
 | `base64_data`   | `TEXT`          | Данные в Base64                      |
 | `mime_type`     | `VARCHAR(50)`   | MIME-тип файла                       |
-| `file_url`      | `VARCHAR(512)`  | URL файла                            |
 | `created_at`    | `TIMESTAMP`     | Дата создания (DEFAULT: `NOW()`)     |
 
 ### Таблица **Drone**

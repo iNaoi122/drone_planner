@@ -1,0 +1,21 @@
+services:
+ db:
+   image: postgres:17
+   environment:
+     POSTGRES_DB: drone
+     POSTGRES_USER: user
+     POSTGRES_PASSWORD: 12345
+   ports:
+     - "5430:5432"
+   volumes:
+     - postgres_data:/var/lib/postgresql/data
+   healthcheck:
+     test: [ "CMD-SHELL", "pg_isready -U user -d drone" ]
+     interval: 5s
+     timeout: 5s
+     retries: 5
+     start_period: 10s
+
+
+volumes:
+   postgres_data:
