@@ -1,4 +1,9 @@
+import base64
+import re
+import tempfile
+
 import folium
+from weasyprint import HTML
 
 
 def create_mission_map(
@@ -6,39 +11,34 @@ def create_mission_map(
         date: str,
         time: str,
         drone: str,
-) -> folium.Map:
+        owner: str
+) -> str:
     """
-    Создает карту маршрута БПЛА с помощью Folium
+    Создает карту маршрута БПЛА и возвращает PDF в формате base64
 
     :param points: Список точек маршрута [{"lat": 55.75, "lng": 37.61}, ...]
     :param date: Дата полета в формате "YYYY-MM-DD"
     :param time: Время полета в формате "HH:MM:SS"
     :param drone: Модель дрона
-    :param save_path: Путь для сохранения HTML файла (если не указан - файл не сохраняется)
-    :return: Объект карты Folium
+    :param owner: Владелец дрона
+    :return: PDF в формате base64
     """
     if not points:
         raise ValueError("Список точек маршрута не может быть пустым")
 
-    # Рассчет среднего центра для карты
     avg_lat = sum(point['lat'] for point in points) / len(points)
     avg_lng = sum(point['lng'] for point in points) / len(points)
 
-    # Создание карты с центром в средних координатах
     folium_map = folium.Map(
         location=[avg_lat, avg_lng],
-        zoom_start=14,
-        tiles='https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png',
-        attr='OpenStreetMap'
+        zoom_start=14
     )
 
-    # Добавление маркеров с номерами точек
     locations = []
     for i, point in enumerate(points):
         lat, lng = point['lat'], point['lng']
         locations.append([lat, lng])
 
-        # Создание маркера с номером точки
         folium.Marker(
             [lat, lng],
             popup=f"Точка {i + 1}",
@@ -54,9 +54,33 @@ def create_mission_map(
         <b>Дрон:</b> {drone}<br>
         <b>Дата:</b> {date}<br>
         <b>Время:</b> {time}<br>
+        <b>Владелец:</b> {owner}<br>
     </div>
     """
     folium_map.get_root().html.add_child(folium.Element(mission_info))
 
-    folium_map.save("maps.html")
-    return folium_map.get_root().render()
+    # Генерируем безопасное имя файла
+    safe_date = re.sub(r'[^\w]', '_', date)
+    safe_time = re.sub(r'[^\w]', '_', time)
+    safe_drone = re.sub(r'[^\w]', '_', drone)
+    safe_owner = re.sub(r'[^\w]', '_', owner)
+    pdf_filename = f"mission_map_{safe_owner}_{safe_drone}_{safe_date}_{safe_time}.pdf"
+
+    # Сохраняем карту во временный HTML
+    with tempfile.NamedTemporaryFile(suffix='.html', delete=False) as tmpfile:
+        html_path = tmpfile.name
+        folium_map.save(html_path)
+
+    # Конвертируем HTML в PDF
+    HTML(html_path).write_pdf(pdf_filename)
+
+    # Удаляем временный HTML
+    import os
+    os.unlink(html_path)
+
+    # Читаем PDF и кодируем в base64
+    with open(pdf_filename, 'rb') as pdf_file:
+        pdf_bytes = pdf_file.read()
+        pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+
+    return pdf_base64

@@ -40,6 +40,10 @@ class UnitOfWork:
         return self._user
 
     @property
+    def drone(self):
+        return self._drone
+
+    @property
     def model(self):
         return self._model
 

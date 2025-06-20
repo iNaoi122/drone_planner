@@ -43,3 +43,6 @@ typing_extensions==4.13.2
 urllib3==2.4.0
 uvicorn==0.34.2
 xyzservices==2025.4.0
+
+pillow~=11.2.1
+weasyprint~=65.1
