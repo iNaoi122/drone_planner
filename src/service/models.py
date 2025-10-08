@@ -33,7 +33,7 @@ async def create_model(
     return
 
 
-async def get_model_by_id(id: str, uow:UnitOfWork) -> ResponseModels:
+async def get_model_by_id(model_id: str, uow:UnitOfWork) -> ResponseModels:
 
     async with uow:
         model = await uow.model.get_or_error(field='id', value=id)

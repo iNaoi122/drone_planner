@@ -28,10 +28,10 @@ async def get_all_models(
     return await models.get_all_models(uow)
 
 
-@models_router.get(f"/{id}")
+@models_router.get("/{model_id}")
 async def get_model(
-        id:str,
+        model_id:str,
         user: Annotated[CurrentUser, Depends(get_auth())],
         uow: UnitOfWork = Depends(get_uow)
 ) -> ResponseModels:
-    return await models.get_model_by_id(id, uow)
+    return await models.get_model_by_id(model_id, uow)

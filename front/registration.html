@@ -5,7 +5,6 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Регистрация пользователя</title>
     <style>
-        /* Сохраняем предыдущие стили */
         body {
             font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
             display: flex;
@@ -51,16 +50,19 @@
             transition: border-color 0.3s;
         }
 
-        /* Изменения для вертикального расположения */
-        .name-group {
-            display: block; /* Убираем grid */
-        }
-
         .name-group .form-group {
-            margin-bottom: 1rem; /* Увеличиваем отступ между полями */
+            margin-bottom: 1rem;
         }
 
-        /* Остальные стили остаются без изменений */
+        .document-group {
+            display: flex;
+            gap: 10px;
+        }
+
+        .document-group > div {
+            flex: 1;
+        }
+
         button {
             width: 100%;
             padding: 0.75rem;
@@ -90,6 +92,13 @@
             margin-top: 0.25rem;
             display: none;
         }
+
+        .success-message {
+            color: #2ecc71;
+            text-align: center;
+            margin-top: 1rem;
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -98,20 +107,20 @@
         <form id="registrationForm">
             <div class="name-group">
                 <div class="form-group">
-                    <label for="lastname">Фамилия</label>
-                    <input 
-                        type="text" 
-                        id="lastname" 
+                    <label for="lastname">Фамилия*</label>
+                    <input
+                        type="text"
+                        id="lastname"
                         required
                         pattern="[А-Яа-яЁё]+"
                         title="Только кириллические символы">
                 </div>
-                
+
                 <div class="form-group">
-                    <label for="firstname">Имя</label>
-                    <input 
-                        type="text" 
-                        id="firstname" 
+                    <label for="firstname">Имя*</label>
+                    <input
+                        type="text"
+                        id="firstname"
                         required
                         pattern="[А-Яа-яЁё]+"
                         title="Только кириллические символы">
@@ -119,20 +128,29 @@
 
                 <div class="form-group">
                     <label for="middlename">Отчество</label>
-                    <input 
-                        type="text" 
-                        id="middlename" 
-                        pattern="[А-Яа-яЁё]+"
+                    <input
+                        type="text"
+                        id="middlename"
+                        pattern="[А-Яа-яЁё]*"
                         title="Только кириллические символы">
                 </div>
             </div>
 
-            <!-- Остальные поля без изменений -->
             <div class="form-group">
-                <label for="age">Возраст</label>
-                <input 
-                    type="number" 
-                    id="age" 
+                <label for="login">Логин*</label>
+                <input
+                    type="text"
+                    id="login"
+                    required
+                    minlength="3"
+                    placeholder="Уникальное имя пользователя">
+            </div>
+
+            <div class="form-group">
+                <label for="age">Возраст*</label>
+                <input
+                    type="number"
+                    id="age"
                     min="18"
                     max="120"
                     required
@@ -141,32 +159,44 @@
             </div>
 
             <div class="form-group">
-                <label for="document">Номер документа</label>
-                <input 
-                    type="text" 
-                    id="document" 
-                    required
-                    pattern="\d{8}"
-                    title="8 цифр без пробелов"
-                    placeholder="12345678">
-                <div class="error-message" id="docError">Требуется 8 цифр</div>
+                <label>Документ*</label>
+                <div class="document-group">
+                    <div>
+                        <input
+                            type="text"
+                            id="id_card_series"
+                            required
+                            pattern="\d{4}"
+                            title="Ровно 4 цифры"
+                            placeholder="Серия (4 цифры)">
+                    </div>
+                    <div>
+                        <input
+                            type="text"
+                            id="id_card_number"
+                            required
+                            pattern="\d{5}"
+                            title="Ровно 5 цифр"
+                            placeholder="Номер (5 цифр)">
+                    </div>
+                </div>
             </div>
 
             <div class="form-group">
-                <label for="password">Пароль</label>
-                <input 
-                    type="password" 
-                    id="password" 
+                <label for="password">Пароль*</label>
+                <input
+                    type="password"
+                    id="password"
                     required
                     minlength="6"
                     placeholder="••••••••">
             </div>
 
             <div class="form-group">
-                <label for="confirmPassword">Повторите пароль</label>
-                <input 
-                    type="password" 
-                    id="confirmPassword" 
+                <label for="confirmPassword">Подтвердите пароль*</label>
+                <input
+                    type="password"
+                    id="confirmPassword"
                     required
                     placeholder="••••••••">
                 <div class="error-message" id="passError">Пароли не совпадают</div>
@@ -174,20 +204,23 @@
             </div>
 
             <button type="submit">Зарегистрироваться</button>
+            <div class="success-message" id="successMessage">
+                Регистрация успешна! Перенаправляем на страницу входа...
+            </div>
         </form>
     </div>
 
-    <!-- Скрипт остается без изменений -->
     <script>
         const form = document.getElementById('registrationForm');
         const password = document.getElementById('password');
         const confirmPassword = document.getElementById('confirmPassword');
         const ageInput = document.getElementById('age');
+        const successMessage = document.getElementById('successMessage');
 
         function validatePasswords() {
             const passError = document.getElementById('passError');
             const passMatch = document.getElementById('passMatch');
-            
+
             if(password.value !== confirmPassword.value) {
                 passError.style.display = 'block';
                 passMatch.style.display = 'none';
@@ -213,30 +246,62 @@
         password.addEventListener('input', validatePasswords);
         ageInput.addEventListener('input', validateAge);
 
-        form.addEventListener('submit', (e) => {
+        form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
-            if(!validateAge() || !validatePasswords()) {
-                alert('Исправьте ошибки в форме!');
+
+            if(!validateAge() || !validatePasswords() || !form.checkValidity()) {
+                alert('Пожалуйста, заполните все обязательные поля корректно!');
                 return;
             }
 
-            if(!form.checkValidity()) {
-                alert('Заполните все обязательные поля!');
-                return;
-            }
+            const userData = {
+                last_name: document.getElementById('lastname').value,
+                first_name: document.getElementById('firstname').value,
+                middle_name: document.getElementById('middlename').value || null,
+                login: document.getElementById('login').value,
+                password: password.value,
+                age: parseInt(ageInput.value),
+                id_card_series: parseInt(document.getElementById('id_card_series').value),
+                id_card_number: parseInt(document.getElementById('id_card_number').value)
+            };
 
-            console.log({
-                lastName: document.getElementById('lastname').value,
-                firstName: document.getElementById('firstname').value,
-                middleName: document.getElementById('middlename').value,
-                age: ageInput.value,
-                document: document.getElementById('document').value,
-                password: password.value
-            });
-            
-            alert('Регистрация успешно завершена!');
-            form.reset();
+            try {
+                // Показываем состояние загрузки
+                const submitBtn = form.querySelector('button');
+                submitBtn.disabled = true;
+                submitBtn.textContent = 'Регистрация...';
+
+                const response = await fetch('http://127.0.0.1:8000/reg', {
+                    method: 'POST',
+                    headers: {
+                        'accept': 'application/json',
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(userData)
+                });
+
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.detail || 'Ошибка сервера');
+                }
+
+                // Показываем сообщение об успехе
+                successMessage.style.display = 'block';
+
+                // Редирект через 2 секунды
+                setTimeout(() => {
+                    window.location.href = 'login.html'; // Замените на ваш URL входа
+                }, 2000);
+
+            } catch (error) {
+                console.error('Ошибка регистрации:', error);
+                alert(`Ошибка регистрации: ${error.message}`);
+
+                // Восстанавливаем кнопку
+                const submitBtn = form.querySelector('button');
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Зарегистрироваться';
+            }
         });
     </script>
 </body>

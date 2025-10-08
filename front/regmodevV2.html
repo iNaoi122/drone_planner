@@ -11,6 +11,8 @@
             --primary-color: #1a73e8;
             --hover-color: #1557b0;
             --text-color: #ffffff;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
         }
 
         /* Стили тулбара */
@@ -27,6 +29,7 @@
             background: #f8f9fa;
             border-radius: 10px;
             box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            position: relative;
         }
 
         .form-group {
@@ -49,8 +52,8 @@
             transition: border-color 0.3s;
         }
 
-        input:focus, 
-        textarea:focus, 
+        input:focus,
+        textarea:focus,
         select:focus {
             border-color: var(--primary-color);
             outline: none;
@@ -65,16 +68,107 @@
             cursor: pointer;
             font-size: 1rem;
             transition: background 0.3s;
+            width: 100%;
         }
 
         .submit-btn:hover {
             background: var(--hover-color);
         }
 
+        .submit-btn:disabled {
+            background: #bdc3c7;
+            cursor: not-allowed;
+        }
+
         .input-group {
             display: grid;
             grid-template-columns: repeat(2, 1fr);
             gap: 1rem;
+        }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .notification-success {
+            background-color: var(--success-color);
+        }
+
+        .notification-error {
+            background-color: var(--error-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; top: 0; }
+            to { opacity: 1; top: 20px; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; top: 20px; }
+            to { opacity: 0; top: 0; }
+        }
+
+        .loading-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(255, 255, 255, 0.8);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+            z-index: 10;
+            display: none;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            color: var(--error-color);
+            font-size: 0.85rem;
+            margin-top: 0.25rem;
+            display: none;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-weight: bold;
         }
     </style>
 </head>
@@ -87,9 +181,10 @@
                     <i class="bi bi-arrow-left me-2"></i>Назад
                 </button>
             </div>
-            <div class="d-flex align-items-center text-white gap-3">
-                <span>Администратор: Иван Петров</span>
-                <button class="btn btn-outline-light" onclick="window.location.href='/logout'">
+            <div class="d-flex align-items-center text-white gap-3 user-info">
+                <div class="user-avatar" id="userAvatar">A</div>
+                <span id="adminName">Загрузка...</span>
+                <button class="btn btn-outline-light" id="logoutBtn">
                     Выйти
                 </button>
             </div>
@@ -98,92 +193,297 @@
 
     <!-- Основной контент -->
     <div class="registration-container">
+        <div class="loading-overlay" id="loadingOverlay">
+            <div class="spinner"></div>
+        </div>
+
         <h2 class="mb-4">Регистрация новой модели дрона</h2>
         <form id="drone-model-form">
             <div class="form-group">
                 <label for="model-name">Название модели *</label>
-                <input 
-                    type="text" 
-                    id="model-name" 
+                <input
+                    type="text"
+                    id="model-name"
                     placeholder="DJI Mavic 3 Pro"
                     required
                     minlength="3"
                     maxlength="50">
+                <div class="error-message" id="nameError">Название модели должно быть от 3 до 50 символов</div>
             </div>
 
             <div class="form-group">
                 <label for="manufacturer">Производитель *</label>
-                <input 
-                    type="text" 
-                    id="manufacturer" 
+                <input
+                    type="text"
+                    id="manufacturer"
                     placeholder="DJI"
                     required
                     minlength="2"
                     maxlength="30">
+                <div class="error-message" id="manufacturerError">Производитель должен быть от 2 до 30 символов</div>
             </div>
 
             <div class="input-group">
                 <div class="form-group">
                     <label for="weight">Вес (кг) *</label>
-                    <input 
-                        type="number" 
-                        id="weight" 
+                    <input
+                        type="number"
+                        id="weight"
                         step="0.1"
                         min="0.1"
                         max="50"
                         required
                         placeholder="1.2">
+                    <div class="error-message" id="weightError">Вес должен быть от 0.1 до 50 кг</div>
                 </div>
 
                 <div class="form-group">
                     <label for="range">Макс. дальность (км) *</label>
-                    <input 
-                        type="number" 
+                    <input
+                        type="number"
                         id="range"
                         min="1"
                         max="1000"
                         required
                         placeholder="25">
+                    <div class="error-message" id="rangeError">Дальность должна быть от 1 до 1000 км</div>
                 </div>
             </div>
 
             <div class="form-group">
                 <label for="description">Описание</label>
-                <textarea 
-                    id="description" 
+                <textarea
+                    id="description"
                     rows="4"
                     maxlength="500"
                     placeholder="Технические характеристики и особенности..."></textarea>
+                <div class="d-flex justify-content-between mt-1">
+                    <div class="error-message" id="descriptionError">Описание не должно превышать 500 символов</div>
+                    <div class="text-muted" id="charCount">0/500</div>
+                </div>
             </div>
 
-            <button type="submit" class="submit-btn">Зарегистрировать модель</button>
+            <button type="submit" class="submit-btn" id="submitBtn">Зарегистрировать модель</button>
         </form>
     </div>
 
     <script>
+        // Текущий пользователь
+        let currentUser = null;
+
+        // DOM элементы
+        const adminNameElement = document.getElementById('adminName');
+        const userAvatarElement = document.getElementById('userAvatar');
+        const logoutBtn = document.getElementById('logoutBtn');
         const form = document.getElementById('drone-model-form');
-        
+        const submitBtn = document.getElementById('submitBtn');
+        const loadingOverlay = document.getElementById('loadingOverlay');
+        const charCountElement = document.getElementById('charCount');
+        const descriptionField = document.getElementById('description');
+
+        // Функция для показа уведомлений
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease-in-out forwards';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Добавляем стили для анимации исчезновения
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; top: 20px; }
+                to { opacity: 0; top: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Получение данных текущего пользователя
+        async function fetchCurrentUser() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showNotification('Требуется авторизация', 'error');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return null;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/user-info', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    showNotification('Сессия истекла', 'error');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    return null;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при получении данных пользователя');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification(error.message, 'error');
+                return null;
+            }
+        }
+
+        // Счетчик символов для описания
+        descriptionField.addEventListener('input', function() {
+            charCountElement.textContent = `${this.value.length}/500`;
+        });
+
+        // Валидация формы
+        function validateForm() {
+            let isValid = true;
+
+            // Сброс предыдущих ошибок
+            document.querySelectorAll('.error-message').forEach(el => {
+                el.style.display = 'none';
+            });
+
+            // Проверка названия модели
+            const modelName = document.getElementById('model-name');
+            if (modelName.value.length < 3 || modelName.value.length > 50) {
+                document.getElementById('nameError').style.display = 'block';
+                isValid = false;
+            }
+
+            // Проверка производителя
+            const manufacturer = document.getElementById('manufacturer');
+            if (manufacturer.value.length < 2 || manufacturer.value.length > 30) {
+                document.getElementById('manufacturerError').style.display = 'block';
+                isValid = false;
+            }
+
+            // Проверка веса
+            const weight = parseFloat(document.getElementById('weight').value);
+            if (isNaN(weight) || weight < 0.1 || weight > 50) {
+                document.getElementById('weightError').style.display = 'block';
+                isValid = false;
+            }
+
+            // Проверка дальности
+            const range = parseInt(document.getElementById('range').value);
+            if (isNaN(range) || range < 1 || range > 1000) {
+                document.getElementById('rangeError').style.display = 'block';
+                isValid = false;
+            }
+
+            // Проверка описания
+            if (descriptionField.value.length > 500) {
+                document.getElementById('descriptionError').style.display = 'block';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // Инициализация страницы
+        async function initPage() {
+            // Проверяем наличие токена
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showNotification('Требуется авторизация', 'error');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
+            // Получаем данные пользователя
+            currentUser = await fetchCurrentUser();
+
+            if (currentUser) {
+                // Отображаем имя пользователя
+                adminNameElement.textContent = `${currentUser.last_name} ${currentUser.first_name}`;
+
+                // Отображаем инициалы в аватаре
+                const initials = (currentUser.first_name[0] + currentUser.last_name[0]).toUpperCase();
+                userAvatarElement.textContent = initials;
+            } else {
+                adminNameElement.textContent = 'Администратор';
+            }
+        }
+
+        // Выход из системы
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('authToken');
+            window.location.href = 'login.html';
+        });
+
+        // Обработка отправки формы
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
-            
+
+            // Валидация формы
+            if (!validateForm()) {
+                return;
+            }
+
+            // Показываем индикатор загрузки
+            loadingOverlay.style.display = 'flex';
+            submitBtn.disabled = true;
+
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showNotification('Требуется авторизация', 'error');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
             const formData = {
-                name: document.getElementById('model-name').value.trim(),
-                manufacturer: document.getElementById('manufacturer').value.trim(),
+                title: document.getElementById('model-name').value.trim(),
+                factory: document.getElementById('manufacturer').value.trim(),
                 weight: parseFloat(document.getElementById('weight').value),
                 range: parseInt(document.getElementById('range').value),
                 description: document.getElementById('description').value.trim()
             };
 
-            if (!form.checkValidity()) {
-                alert('Заполните все обязательные поля!');
-                return;
-            }
+            try {
+                // Отправка данных на сервер
+                const response = await fetch('http://localhost:8000/models', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify(formData)
+                });
 
-            // Эмуляция отправки данных
-            console.log('Отправка данных модели:', formData);
-            alert('Модель успешно зарегистрирована!');
-            form.reset();
+                if (response.ok) {
+                    showNotification('Модель дрона успешно зарегистрирована!');
+                    form.reset();
+                    charCountElement.textContent = '0/500';
+                } else {
+                    const error = await response.json();
+                    throw new Error(error.detail || 'Ошибка регистрации модели');
+                }
+            } catch (error) {
+                console.error('Ошибка регистрации модели:', error);
+                showNotification(`Ошибка: ${error.message}`, 'error');
+            } finally {
+                loadingOverlay.style.display = 'none';
+                submitBtn.disabled = false;
+            }
         });
+
+        // Запуск инициализации при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initPage);
     </script>
 </body>
 </html>

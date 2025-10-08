@@ -67,6 +67,7 @@ class Drone(Base):
     model_id: Mapped[UUID] = mapped_column(ForeignKey('model.id'))
     model: Mapped['Model'] = relationship(back_populates='drones')
     title: Mapped[str]
+    photo: Mapped[bytes]
     description: Mapped[str | None]
     hull_number: Mapped[str]
     file_id: Mapped[UUID] = mapped_column(ForeignKey('file.id'))
