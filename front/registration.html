@@ -147,14 +147,11 @@
             </div>
 
             <div class="form-group">
-                <label for="age">Возраст*</label>
+                <label for="birth_date">Дата рождения*</label>
                 <input
-                    type="number"
-                    id="age"
-                    min="18"
-                    max="120"
-                    required
-                    placeholder="18">
+                    type="date"
+                    id="birth_date"
+                    required>
                 <div class="error-message" id="ageError">Минимальный возраст - 18 лет</div>
             </div>
 
@@ -214,7 +211,7 @@
         const form = document.getElementById('registrationForm');
         const password = document.getElementById('password');
         const confirmPassword = document.getElementById('confirmPassword');
-        const ageInput = document.getElementById('age');
+        const birthDateInput = document.getElementById('birth_date');
         const successMessage = document.getElementById('successMessage');
 
         function validatePasswords() {
@@ -234,7 +231,21 @@
 
         function validateAge() {
             const ageError = document.getElementById('ageError');
-            if(ageInput.value < 18) {
+            if(!birthDateInput.value) {
+                ageError.style.display = 'none';
+                return false;
+            }
+            
+            const birthDate = new Date(birthDateInput.value);
+            const today = new Date();
+            let age = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                age--;
+            }
+            
+            if(age < 18) {
                 ageError.style.display = 'block';
                 return false;
             }
@@ -244,7 +255,7 @@
 
         confirmPassword.addEventListener('input', validatePasswords);
         password.addEventListener('input', validatePasswords);
-        ageInput.addEventListener('input', validateAge);
+        birthDateInput.addEventListener('change', validateAge);
 
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
@@ -254,13 +265,23 @@
                 return;
             }
 
+            // Calculate age from birth date
+            const birthDate = new Date(birthDateInput.value);
+            const today = new Date();
+            let calculatedAge = today.getFullYear() - birthDate.getFullYear();
+            const monthDiff = today.getMonth() - birthDate.getMonth();
+            
+            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+                calculatedAge--;
+            }
+            
             const userData = {
                 last_name: document.getElementById('lastname').value,
                 first_name: document.getElementById('firstname').value,
                 middle_name: document.getElementById('middlename').value || null,
                 login: document.getElementById('login').value,
                 password: password.value,
-                age: parseInt(ageInput.value),
+                age: calculatedAge,
                 id_card_series: parseInt(document.getElementById('id_card_series').value),
                 id_card_number: parseInt(document.getElementById('id_card_number').value)
             };

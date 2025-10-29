@@ -8,7 +8,7 @@ import uuid
 from fastapi import UploadFile
 
 from src.adapter.auth import CurrentUser
-# from src.adapter.cert import generate_drone_cert_base64
+from src.adapter.cert import generate_drone_cert_base64
 from src.domain.models import Drone, File
 from src.schemas.drones import ResponseDrone, CreateDrone
 from src.service.uow import UnitOfWork
@@ -38,20 +38,26 @@ async def create_drone(
 ):
     async with uow:
         user = await uow.user.get("id", user.id)
+        model = await uow.model.get("id", drone.model_id)
         hull_number = generate_flight_number()
         temp_file = None
         try:
             content = await image.read()
-            with tempfile.NamedTemporaryFile(delete=False) as tmp:
+            with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(image.filename)[1]) as tmp:
                 tmp.write(content)
                 temp_file = tmp.name
 
-            # base64_pdf = generate_drone_cert_base64(
-            #     image=temp_file,
-            #     hull_number=hull_number,
-            #     owner=user.last_name+" "+user.first_name
-            # )
-            base64_pdf = "djlsfs"
+            owner_name = f"{user.last_name} {user.first_name}"
+            if user.middle_name:
+                owner_name += f" {user.middle_name}"
+            
+            base64_pdf = generate_drone_cert_base64(
+                image_path=temp_file,
+                hull_number=hull_number,
+                owner=owner_name,
+                drone_title=drone.title,
+                model_title=model.title if model else None
+            )
 
         finally:
             if temp_file and os.path.exists(temp_file):
@@ -89,6 +95,13 @@ async def delete_drone(
         uow.drone.update(drone)
         await uow.commit()
 
+async def update_drone(
+    uow: UnitOfWork,
+    drone_id: str,
+    drone: CreateDrone,
+    image: UploadFile
+):
+    pass
 
 def generate_flight_number():
     prefix = "RU-"
