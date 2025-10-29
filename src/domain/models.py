@@ -31,7 +31,7 @@ class User(Base):
     last_name: Mapped[str]
     login: Mapped[str]
     password: Mapped[str]
-    age: Mapped[int]
+    birth_date: Mapped[datetime.date]
     role_id: Mapped[UUID] = mapped_column(ForeignKey('role.id'))
     role: Mapped['Role'] = relationship(back_populates='users')
     id_card_series: Mapped[int]
@@ -67,6 +67,7 @@ class Drone(Base):
     model_id: Mapped[UUID] = mapped_column(ForeignKey('model.id'))
     model: Mapped['Model'] = relationship(back_populates='drones')
     title: Mapped[str]
+    photo: Mapped[bytes]
     description: Mapped[str | None]
     hull_number: Mapped[str]
     file_id: Mapped[UUID] = mapped_column(ForeignKey('file.id'))

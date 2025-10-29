@@ -9,6 +9,7 @@ class ResponseDrone(BaseModel):
     model_id: UUID
     hull_number: str
     description: str
+    photo: str
 
 class CreateDrone(BaseModel):
     model_id: UUID

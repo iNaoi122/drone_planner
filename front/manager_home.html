@@ -11,6 +11,8 @@
             --primary-color: #1a73e8;
             --hover-color: #1557b0;
             --text-color: #ffffff;
+            --error-color: #e74c3c;
+            --success-color: #2ecc71;
         }
 
         .admin-toolbar {
@@ -30,6 +32,7 @@
 
         .mission-card:hover {
             transform: translateY(-3px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .download-btn {
@@ -39,6 +42,9 @@
             border-radius: 8px;
             text-decoration: none;
             transition: background 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
         }
 
         .download-btn:hover {
@@ -56,6 +62,99 @@
             flex-grow: 1;
             margin-right: 2rem;
         }
+
+        .notification {
+            position: fixed;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 15px 30px;
+            border-radius: 8px;
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .notification-success {
+            background-color: var(--success-color);
+        }
+
+        .notification-error {
+            background-color: var(--error-color);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; top: 0; }
+            to { opacity: 1; top: 20px; }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; top: 20px; }
+            to { opacity: 0; top: 0; }
+        }
+
+        .loading-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 300px;
+        }
+
+        .spinner {
+            border: 4px solid rgba(0, 0, 0, 0.1);
+            border-radius: 50%;
+            border-top: 4px solid var(--primary-color);
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .mission-status {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 500;
+        }
+
+        .status-completed {
+            background-color: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-pending {
+            background-color: #fff8e1;
+            color: #f57f17;
+        }
+
+        .status-cancelled {
+            background-color: #ffebee;
+            color: #c62828;
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #f0f2f5;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--primary-color);
+            font-weight: bold;
+        }
     </style>
 </head>
 <body>
@@ -63,16 +162,18 @@
     <nav class="admin-toolbar navbar navbar-expand-lg">
         <div class="container-fluid">
             <div class="d-flex align-items-center gap-4">
-                <button class="btn btn-light" 
-                        onclick="window.location.href='/add-drone-model'">
+                <button class="btn btn-light"
+                        onclick="window.location.href='regmodevV2.html'">
                     <i class="bi bi-plus-lg me-2"></i>Добавить модель
                 </button>
             </div>
 
             <div class="d-flex align-items-center text-white gap-3">
-                <span>Администратор: Иван Иванов</span>
-                <button class="btn btn-outline-light" 
-                        onclick="window.location.href='/logout'">
+                <div class="user-info">
+                    <div class="user-avatar" id="userAvatar">A</div>
+                    <span id="adminName">Загрузка...</span>
+                </div>
+                <button class="btn btn-outline-light" id="logoutBtn">
                     Выйти
                 </button>
             </div>
@@ -81,48 +182,385 @@
 
     <!-- Основной контент -->
     <div class="container-fluid py-4">
-        <h2 class="mb-4">Все полеты</h2>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h2>Все полеты</h2>
+            <div class="d-flex gap-2">
+            </div>
+        </div>
 
         <!-- Список миссий -->
-        <div class="row">
-            <!-- Пример миссии -->
-            <div class="col-12">
-                <div class="mission-card">
-                    <div class="mission-content">
-                        <div class="mission-info">
-                            <div class="mb-2">
-                                <span class="fw-bold">Пользователь:</span> 
-                                Иванов Алексей Сергеевич
-                            </div>
-                            <div class="mb-2">
-                                <span class="fw-bold">Модель дрона:</span> 
-                                DJI Mavic 3 Enterprise
-                            </div>
-                            <div>
-                                <span class="fw-bold">Дата полета:</span> 
-                                15.07.2023 14:30
-                            </div>
-                        </div>
-                        <a href="#" class="download-btn">
-                            <i class="bi bi-download me-2"></i>Маршрут
-                        </a>
-                    </div>
-                </div>
+        <div class="row" id="missionsContainer">
+            <div class="col-12 loading-container">
+                <div class="spinner"></div>
             </div>
-
-            <!-- Другие миссии -->
         </div>
 
         <!-- Пагинация -->
         <nav class="mt-4">
-            <ul class="pagination justify-content-center">
-                <li class="page-item"><a class="page-link" href="#">1</a></li>
-                <li class="page-item"><a class="page-link" href="#">2</a></li>
-                <li class="page-item"><a class="page-link" href="#">3</a></li>
+            <ul class="pagination justify-content-center" id="pagination">
+                <!-- Пагинация будет добавлена динамически -->
             </ul>
         </nav>
     </div>
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Текущий пользователь
+        let currentUser = null;
+        let missions = [];
+        let currentPage = 1;
+        const itemsPerPage = 5;
+
+        // DOM элементы
+        const adminNameElement = document.getElementById('adminName');
+        const userAvatarElement = document.getElementById('userAvatar');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const missionsContainer = document.getElementById('missionsContainer');
+        const paginationElement = document.getElementById('pagination');
+        const statusFilter = document.getElementById('statusFilter');
+        const dateFilter = document.getElementById('dateFilter');
+
+        // Функция для показа уведомлений
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `notification notification-${type}`;
+            notification.textContent = message;
+
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.animation = 'fadeOut 0.3s ease-in-out forwards';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        // Добавляем стили для анимации исчезновения
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes fadeOut {
+                from { opacity: 1; top: 20px; }
+                to { opacity: 0; top: 0; }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // Получение данных текущего пользователя
+        async function fetchCurrentUser() {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showNotification('Требуется авторизация', 'error');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return null;
+            }
+
+            try {
+                const response = await fetch('http://localhost:8000/user-info', {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    showNotification('Сессия истекла', 'error');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    return null;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при получении данных пользователя');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification(error.message, 'error');
+                return null;
+            }
+        }
+
+        // Получение списка миссий
+        async function fetchMissions(page = 1, status = '', date = '') {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                return { missions: [], total: 0 };
+            }
+
+            try {
+                // Формируем URL с параметрами
+                let url = `http://localhost:8000/mission/all`;
+
+                if (status) {
+                    url += `&status=${status}`;
+                }
+
+                if (date) {
+                    url += `&date=${date}`;
+                }
+
+                const response = await fetch(url, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    showNotification('Сессия истекла', 'error');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    return { missions: [], total: 0 };
+                }
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при получении списка миссий');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification(error.message, 'error');
+                return { missions: [], total: 0 };
+            }
+        }
+
+        // Форматирование даты
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return new Intl.DateTimeFormat('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            }).format(date);
+        }
+
+        // Отображение статуса
+        function getStatusBadge(status) {
+            let badgeClass = '';
+            let statusText = '';
+
+            switch(status) {
+                case 'completed':
+                    badgeClass = 'status-completed';
+                    statusText = 'Завершён';
+                    break;
+                case 'pending':
+                    badgeClass = 'status-pending';
+                    statusText = 'Ожидает';
+                    break;
+                case 'cancelled':
+                    badgeClass = 'status-cancelled';
+                    statusText = 'Отменён';
+                    break;
+                default:
+                    badgeClass = 'status-pending';
+                    statusText = 'Неизвестен';
+            }
+
+            return `<span class="mission-status ${badgeClass}">${statusText}</span>`;
+        }
+
+        // Создание карточки миссии
+        function createMissionCard(mission) {
+            const card = document.createElement('div');
+            card.className = 'col-12';
+
+            card.innerHTML = `
+                <div class="mission-card">
+                    <div class="mission-content">
+                        <div class="mission-info">
+                            <div class="mb-2 d-flex align-items-center">
+                                <span class="fw-bold me-2">Пользователь:</span>
+                                ${mission.user_last_name} ${mission.user_first_name}
+                            </div>
+                            <div class="mb-2">
+                                <span class="fw-bold me-2">Бортовой номер:</span>
+                                ${mission.hull_number}
+                            </div>
+                            <div class="mb-2">
+                                <span class="fw-bold me-2">Описание:</span>
+                                ${mission.description || 'Без описания'}
+                            </div>
+                            <div class="mb-2">
+                                <span class="fw-bold me-2">Время полета:</span>
+                                ${formatTime(mission.mission_time)}
+                            </div>
+                            <div>
+                                <span class="fw-bold me-2">Файл:</span>
+                                ${mission.file_title || 'Без файла'}
+                            </div>
+                        </div>
+                       <a href="#" class="download-btn" data-id="${mission.id}">
+                            <i class="bi bi-download"></i>Маршрут
+                        </a>
+                    </div>
+                </div>
+            `;
+
+            return card;
+        }
+
+        // Отображение миссий
+        function renderMissions(missions) {
+            missionsContainer.innerHTML = '';
+
+            if (missions.length === 0) {
+                missionsContainer.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <h4>Миссии не найдены</h4>
+                        <p class="text-muted">Попробуйте изменить параметры фильтра</p>
+                    </div>
+                `;
+                return;
+            }
+
+            missions.forEach(mission => {
+                const card = createMissionCard(mission);
+                missionsContainer.appendChild(card);
+            });
+
+            // Добавляем обработчики для кнопок скачивания
+            document.querySelectorAll('.download-btn').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const missionId = this.getAttribute('data-id');
+                    downloadMissionRoute(missionId);
+                });
+            });
+
+            // Обновляем пагинацию
+            renderPagination(2);
+        }
+
+        function formatTime(timeString) {
+            if (!timeString) return '';
+            const timeParts = timeString.split(':');
+            return `${timeParts[0]}:${timeParts[1]}`;
+        }
+
+        // Отображение пагинации
+        function renderPagination(totalItems) {
+            const totalPages = 1;
+            paginationElement.innerHTML = '';
+
+            if (totalPages <= 1) return;
+
+            // Кнопка "Назад"
+            const prevBtn = document.createElement('li');
+            prevBtn.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevBtn.innerHTML = `<a class="page-link" href="#">&laquo;</a>`;
+            prevBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentPage > 1) {
+                    currentPage--;
+                    loadMissions();
+                }
+            });
+            paginationElement.appendChild(prevBtn);
+
+            // Нумерация страниц
+            for (let i = 1; i <= totalPages; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                pageItem.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+                pageItem.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    currentPage = i;
+                    loadMissions();
+                });
+                paginationElement.appendChild(pageItem);
+            }
+
+            // Кнопка "Вперед"
+            const nextBtn = document.createElement('li');
+            nextBtn.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextBtn.innerHTML = `<a class="page-link" href="#">&raquo;</a>`;
+            nextBtn.addEventListener('click', (e) => {
+                e.preventDefault();
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    loadMissions();
+                }
+            });
+            paginationElement.appendChild(nextBtn);
+        }
+
+        // Загрузка миссий
+        async function loadMissions() {
+            missionsContainer.innerHTML = `
+                <div class="col-12 loading-container">
+                    <div class="spinner"></div>
+                </div>
+            `;
+
+            try {
+                const data = await fetchMissions(currentPage);
+                console.log(data);
+                renderMissions(data);
+            } catch (error) {
+                console.error('Ошибка загрузки миссий:', error);
+                missionsContainer.innerHTML = `
+                    <div class="col-12 text-center py-5">
+                        <h4>Ошибка загрузки данных</h4>
+                        <p class="text-muted">${error.message || 'Попробуйте позже'}</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Инициализация страницы
+        async function initPage() {
+            // Проверяем наличие токена
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                showNotification('Требуется авторизация', 'error');
+                setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
+            // Получаем данные пользователя
+            currentUser = await fetchCurrentUser();
+
+            if (currentUser) {
+                // Отображаем имя пользователя
+                adminNameElement.textContent = `${currentUser.last_name} ${currentUser.first_name}`;
+
+                // Отображаем инициалы в аватаре
+                const initials = (currentUser.first_name[0] + currentUser.last_name[0]).toUpperCase();
+                userAvatarElement.textContent = initials;
+            } else {
+                adminNameElement.textContent = 'Администратор';
+            }
+
+            // Загружаем миссии
+            await loadMissions();
+
+            // Добавляем обработчики фильтров
+            statusFilter.addEventListener('change', () => {
+                currentPage = 1;
+                loadMissions();
+            });
+
+            dateFilter.addEventListener('change', () => {
+                currentPage = 1;
+                loadMissions();
+            });
+        }
+
+        // Выход из системы
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('authToken');
+            window.location.href = 'login.html';
+        });
+
+        // Запуск инициализации при загрузке страницы
+        document.addEventListener('DOMContentLoaded', initPage);
+    </script>
 </body>
 </html>
