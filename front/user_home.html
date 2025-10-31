@@ -358,6 +358,9 @@
                         <i class="bi bi-three-dots-vertical"
                            data-bs-toggle="dropdown"></i>
                         <ul class="dropdown-menu">
+                             <li><a class="dropdown-item update-drone" data-drone-id="${drone.id}" href="#">
+                                <i class="bi bi-pencil-square me-2"></i>Редактировать
+                            </a></li>
                             <li><a class="dropdown-item text-danger delete-drone" data-drone-id="${drone.id}" href="#">
                                 <i class="bi bi-trash me-2"></i>Удалить
                             </a></li>
@@ -389,7 +392,18 @@
                     }
                 });
             });
+            // Добавляем обработчики для кнопок редактирования
+            document.querySelectorAll('.update-drone').forEach(button => {
+                button.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    const droneId = button.getAttribute('data-drone-id');
+                    console.log('Update button clicked (delegation), drone ID:', droneId);
+                    window.location.href = `updatedrone.html?drone_id=${droneId}`;
+                });
+            });
         }
+        
+
 
         // Удаление дрона
         async function deleteDrone(droneId) {

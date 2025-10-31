@@ -42,6 +42,10 @@ class UnitOfWork:
         return self._user
 
     @property
+    def file(self):
+        return self._file
+
+    @property
     def drone(self):
         return self._drone
 

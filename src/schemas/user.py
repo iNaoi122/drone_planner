@@ -1,3 +1,5 @@
+from datetime import date
+
 from pydantic import BaseModel
 
 
@@ -7,7 +9,7 @@ class RegisterRequest(BaseModel):
     last_name: str
     login: str
     password: str
-    age: int
+    birth_date: date
     id_card_series: int
     id_card_number: int
 

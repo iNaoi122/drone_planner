@@ -29,10 +29,6 @@ async def user_info(
         )
     return r
 
-
-
-
-
 @auth_router.post("/reg", status_code=status.HTTP_201_CREATED)
 async def reg(
     user: RegisterRequest,
@@ -48,15 +44,13 @@ async def reg(
             last_name=user.last_name,
             login=user.login,
             password=pwd_context.hash(user.password),
-            age=user.age,
+            birth_date=user.birth_date,
             role=role,
             id_card_series=user.id_card_series,
             id_card_number=user.id_card_number
         )
         uow.add(new_user)
         await uow.commit()
-    return {"first_name":user.first_name}
-
 
 @auth_router.post("/token", response_model=Token)
 async def token(

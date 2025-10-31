@@ -3,6 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <title>Планировщик маршрутов БПЛА</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.7.1/dist/leaflet.css" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
@@ -542,7 +545,30 @@
                 confirmBtn.disabled = false;
 
                 if(response.ok) {
-                    showNotification('Маршрут успешно сохранен!');
+                   
+                    try {
+                    const pdfBlob = await response.blob();
+                    filename = `map_${Date.now()}.pdf`;
+    
+                   const pdfUrl = URL.createObjectURL(pdfBlob);
+
+                    // Создаем временную ссылку для скачивания
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = pdfUrl;
+                    downloadLink.download = filename;
+
+                    // Автоматически кликаем по ссылке для скачивания
+                    document.body.appendChild(downloadLink);
+                    downloadLink.click();
+                    document.body.removeChild(downloadLink);
+
+                    // Освобождаем память
+                    setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
+                        showNotification('Маршрут успешно сохранен! PDF файл скачивается...');
+                    } catch (error) {
+                        console.error('Error generating PDF:', error);
+                        showNotification('Маршрут сохранен, но произошла ошибка при создании PDF', 'error');
+                    }
 
                     // Очищаем данные
                     sessionStorage.removeItem('routePoints');

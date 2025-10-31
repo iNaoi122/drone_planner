@@ -1,6 +1,7 @@
 import datetime
 
 from pydantic import BaseModel
+from uuid import UUID
 
 
 class MissionRequest(BaseModel):
@@ -11,6 +12,7 @@ class MissionRequest(BaseModel):
     drone: str
 
 class MissionResponse(BaseModel):
+    id: UUID
     mission_time: datetime.time
     description: str
     map_data: list[dict]
