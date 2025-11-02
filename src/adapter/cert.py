@@ -1,185 +1,167 @@
+from reportlab.lib.pagesizes import A4, landscape
+from reportlab.pdfgen import canvas
+from reportlab.lib.utils import ImageReader
+from reportlab.pdfbase import pdfmetrics
+from reportlab.pdfbase.ttfonts import TTFont
+from reportlab.lib.colors import Color, HexColor
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.platypus import Paragraph, Table, TableStyle, Spacer
+from reportlab.lib.units import mm
+from reportlab.lib import colors
+from datetime import datetime
 import base64
 from io import BytesIO
-from datetime import datetime
-from weasyprint import HTML
-import os
 
 
-def generate_drone_cert_base64(image_path, hull_number, owner, drone_title, model_title=None):
-    """Generate a drone certificate in PDF format and return as base64 string."""
-    
-    # Validate input
+def register_cyrillic_fonts():
+    try:
+        pdfmetrics.registerFont(TTFont('Arial', 'arial.ttf'))
+        pdfmetrics.registerFont(TTFont('Arial-Bold', 'arialbd.ttf'))
+        return 'Arial'
+    except:
+        try:
+            pdfmetrics.registerFont(TTFont('DejaVuSans', 'DejaVuSans.ttf'))
+            pdfmetrics.registerFont(TTFont('DejaVuSans-Bold', 'DejaVuSans-Bold.ttf'))
+            return 'DejaVuSans'
+        except:
+            return 'Helvetica'
+
+
+def generate_drone_cert_simple(image_path, hull_number, owner, drone_title, model_title=None):
     if not image_path or not hull_number or not owner:
         raise ValueError("Image path, hull number, and owner are required")
-    
-    # Read and encode the image to base64 for embedding in HTML
-    with open(image_path, 'rb') as img_file:
-        img_data = base64.b64encode(img_file.read()).decode('utf-8')
-    
-    # Determine MIME type
-    ext = os.path.splitext(image_path)[1].lower()
-    mime_type_map = {
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.png': 'image/png',
-        '.gif': 'image/gif',
-        '.webp': 'image/webp'
-    }
-    mime_type = mime_type_map.get(ext, 'image/jpeg')
-    
-    # Current date
-    issue_date = datetime.now().strftime("%d.%m.%Y")
-    
-    # Create HTML template for the certificate
-    html_content = f"""
-    <!DOCTYPE html>
-    <html>
-    <head>
-        <meta charset="UTF-8">
-        <style>
-            @page {{
-                size: A4 landscape;
-                margin: 0;
-            }}
-            body {{
-                font-family: 'Arial', sans-serif;
-                margin: 0;
-                padding: 40px;
-                background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-                color: #333;
-            }}
-            .certificate {{
-                background: white;
-                padding: 60px;
-                border-radius: 20px;
-                box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-                text-align: center;
-                position: relative;
-                min-height: 500px;
-            }}
-            .header {{
-                border-bottom: 4px solid #667eea;
-                padding-bottom: 20px;
-                margin-bottom: 40px;
-            }}
-            h1 {{
-                color: #667eea;
-                font-size: 48px;
-                margin: 0;
-                text-transform: uppercase;
-                letter-spacing: 2px;
-            }}
-            .subtitle {{
-                color: #666;
-                font-size: 18px;
-                margin-top: 10px;
-            }}
-            .content {{
-                margin: 40px 0;
-            }}
-            .drone-image {{
-                max-width: 300px;
-                max-height: 300px;
-                margin: 20px auto;
-                border-radius: 10px;
-                box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            }}
-            .info-section {{
-                background: #f8f9fa;
-                padding: 30px;
-                border-radius: 10px;
-                margin: 30px 0;
-                text-align: left;
-            }}
-            .info-row {{
-                margin: 15px 0;
-                font-size: 18px;
-            }}
-            .info-label {{
-                font-weight: bold;
-                color: #667eea;
-                display: inline-block;
-                width: 200px;
-            }}
-            .info-value {{
-                color: #333;
-            }}
-            .footer {{
-                margin-top: 40px;
-                padding-top: 20px;
-                border-top: 2px solid #e0e0e0;
-                color: #666;
-                font-size: 14px;
-            }}
-            .seal {{
-                position: absolute;
-                bottom: 60px;
-                right: 60px;
-                width: 120px;
-                height: 120px;
-                border: 3px solid #667eea;
-                border-radius: 50%;
-                display: flex;
-                align-items: center;
-                justify-content: center;
-                background: white;
-                font-weight: bold;
-                color: #667eea;
-                font-size: 12px;
-                text-align: center;
-            }}
-        </style>
-    </head>
-    <body>
-        <div class="certificate">
-            <div class="header">
-                <h1>Сертификат регистрации БПЛА</h1>
-                <div class="subtitle">Удостоверение регистрации беспилотного летательного аппарата</div>
-            </div>
-            
-            <div class="content">
-                <img src="data:{mime_type};base64,{img_data}" class="drone-image" alt="Drone Image">
-                
-                <div class="info-section">
-                    <div class="info-row">
-                        <span class="info-label">Бортовой номер:</span>
-                        <span class="info-value">{hull_number}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Название:</span>
-                        <span class="info-value">{drone_title}</span>
-                    </div>
-                    {f'<div class="info-row"><span class="info-label">Модель:</span><span class="info-value">{model_title}</span></div>' if model_title else ''}
-                    <div class="info-row">
-                        <span class="info-label">Владелец:</span>
-                        <span class="info-value">{owner}</span>
-                    </div>
-                    <div class="info-row">
-                        <span class="info-label">Дата выдачи:</span>
-                        <span class="info-value">{issue_date}</span>
-                    </div>
-                </div>
-            </div>
-            
-            <div class="footer">
-                Данный сертификат подтверждает регистрацию беспилотного летательного аппарата<br>
-                в системе учета и управления дронами
-            </div>
-            
-            <div class="seal">
-                ОФИЦИАЛЬНАЯ<br>ПЕЧАТЬ
-            </div>
-        </div>
-    </body>
-    </html>
-    """
-    
-    # Generate PDF from HTML
-    pdf_buffer = BytesIO()
-    HTML(string=html_content).write_pdf(pdf_buffer)
-    pdf_buffer.seek(0)
-    
-    # Encode PDF to base64
-    pdf_base64 = base64.b64encode(pdf_buffer.read()).decode('utf-8')
-    
+
+    font_name = register_cyrillic_fonts()
+    buffer = BytesIO()
+
+    page_size = landscape(A4)
+    width, height = page_size
+
+    c = canvas.Canvas(buffer, pagesize=page_size)
+
+    c.setFillColor(HexColor('#667eea'))
+    c.rect(0, 0, width, height, fill=1, stroke=0)
+
+    cert_margin = 20 * mm
+    cert_width = width - 2 * cert_margin
+    cert_height = height - 2 * cert_margin
+
+    c.setFillColor(colors.white)
+    c.roundRect(cert_margin, cert_margin, cert_width, cert_height, 10 * mm, fill=1, stroke=0)
+
+    c.setFont(f"{font_name}-Bold", 28)
+    c.setFillColor(HexColor('#667eea'))
+    c.drawCentredString(width / 2, height - 80, "СЕРТИФИКАТ РЕГИСТРАЦИИ БПЛА")
+
+    c.setFont(font_name, 14)
+    c.setFillColor(HexColor('#666666'))
+    c.drawCentredString(width / 2, height - 110,
+                        "Удостоверение регистрации беспилотного летательного аппарата")
+
+    content_start_y = height - 150
+    content_end_y = 100
+
+    try:
+        img = ImageReader(image_path)
+
+        img_width_orig, img_height_orig = img.getSize()
+        img_ratio = img_width_orig / img_height_orig
+
+        max_img_height = 60 * mm
+        max_img_width = 80 * mm
+
+        img_height = min(max_img_height, max_img_width / img_ratio)
+        img_width = img_height * img_ratio
+
+        if img_width > max_img_width:
+            img_width = max_img_width
+            img_height = img_width / img_ratio
+
+        img_x = width / 2 - img_width / 2
+        img_y = content_start_y - 30 * mm - img_height
+
+        c.drawImage(img, img_x, img_y, width=img_width, height=img_height, mask='auto')
+        img_y_position = img_y
+
+    except Exception as e:
+        print(f"Error loading image: {e}")
+        img_y_position = content_start_y - 30 * mm
+
+    fields = [
+        ("Бортовой номер:", hull_number),
+        ("Название:", drone_title),
+        ("Владелец:", owner),
+        ("Дата выдачи:", datetime.now().strftime("%d.%m.%Y"))
+    ]
+
+    if model_title:
+        fields.insert(2, ("Модель:", model_title))
+
+    if img_y_position:
+        info_start_y = img_y_position - 30 * mm  # Space below image
+    else:
+        info_start_y = content_start_y - 100 * mm
+
+    min_info_y = content_end_y + len(fields) * 25 + 20
+    info_start_y = max(info_start_y, min_info_y)
+
+    for i, (label, value) in enumerate(fields):
+        y_pos = info_start_y - (i * 25)
+
+        c.setFillColor(HexColor('#667eea'))
+        c.setFont(f"{font_name}-Bold", 12)
+        c.drawString(80 * mm, y_pos, label)
+
+        c.setFillColor(colors.black)
+        c.setFont(font_name, 12)
+
+        value_x = 200 * mm
+        c.drawString(value_x, y_pos, value)
+
+    c.setFillColor(HexColor('#666666'))
+    c.setFont(font_name, 10)
+
+    footer_y1 = 60
+    footer_y2 = 45
+
+    last_field_y = info_start_y - (len(fields) * 25)
+    if last_field_y < footer_y1 + 20:
+        footer_y1 = max(30, last_field_y - 20)
+        footer_y2 = footer_y1 - 15
+
+    c.drawCentredString(width / 2, footer_y1,
+                        "Данный сертификат подтверждает регистрацию беспилотного летательного аппарата")
+    c.drawCentredString(width / 2, footer_y2,
+                        "в системе учета и управления дронами")
+
+    c.showPage()
+    c.save()
+
+    buffer.seek(0)
+    pdf_bytes = buffer.getvalue()
+    pdf_base64 = base64.b64encode(pdf_bytes).decode('utf-8')
+
     return pdf_base64
+
+
+# Пример использования
+if __name__ == "__main__":
+    try:
+        pdf_base64_simple = generate_drone_cert_simple(
+            image_path="../../fpv2.jpg",
+            hull_number="RU-DRN-2024-002",
+            owner="Петров Алексей Сергеевич",
+            drone_title="Квадрокоптер AirExplorer",
+            model_title="Autel Evo Nano+"
+        )
+
+        with open("drone_certificate_simple.pdf", "wb") as f:
+            f.write(base64.b64decode(pdf_base64_simple))
+
+        print("Simple PDF saved as drone_certificate_simple.pdf")
+
+    except Exception as e:
+        print(f"Error: {e}")
+        import traceback
+
+        traceback.print_exc()

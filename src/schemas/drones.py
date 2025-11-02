@@ -15,3 +15,8 @@ class CreateDrone(BaseModel):
     model_id: UUID
     title: str
     description: str
+
+class DroneCert(BaseModel):
+    title: str
+    content: str
+    mime_type: str

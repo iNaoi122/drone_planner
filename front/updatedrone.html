@@ -2,7 +2,7 @@
 <html lang="ru">
 <head>
      <meta charset="UTF-8">
-    <title>Регистрация БПЛА</title>
+    <title>Редактирование БПЛА</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
         /* Общие стили */
@@ -267,6 +267,13 @@
             color: #7f8c8d;
             margin-top: 0.25rem;
         }
+
+        .current-photo-info {
+            margin-top: 10px;
+            font-size: 0.9rem;
+            color: #666;
+            text-align: center;
+        }
     </style>
 </head>
 <body>
@@ -292,8 +299,8 @@
 
     <!-- Основной контент -->
     <div class="registration-container">
-        <h2>Регистрация нового БПЛА</h2>
-        <form id="drone-registration-form">
+        <h2>Редактирование БПЛА</h2>
+        <form id="drone-update-form">
 
             <div class="form-group">
                 <label>Фото дрона:</label>
@@ -301,16 +308,16 @@
                     <input type="file"
                            id="photo-upload"
                            class="file-upload-input"
-                           accept="image/*"
-                           required>
+                           accept="image/*">
                     <label for="photo-upload" class="file-upload-label">
                         <i class="bi bi-camera fs-4"></i><br>
-                        <span>Нажмите для загрузки фото</span>
+                        <span>Нажмите для изменения фото</span>
                     </label>
                     <div class="preview-container">
                         <img src="#" alt="Preview" class="preview-image" id="previewImage">
+                        <div class="current-photo-info" id="currentPhotoInfo">Текущее фото загружено</div>
                         <div class="remove-photo" onclick="removePhoto()" id="removePhotoBtn">
-                            <i class="bi bi-trash"></i> Удалить фото
+                            <i class="bi bi-trash"></i> Удалить новое фото
                         </div>
                     </div>
                 </div>
@@ -319,7 +326,7 @@
             <!-- Поле выбора модели -->
             <div class="form-group">
                 <label for="model-select">Модель дрона:</label>
-                <select id="model-select" class="model-select" required>
+                <select id="model-select" class="model-select">
                     <option value="">Выберите модель</option>
                     <!-- Опции будут загружены динамически -->
                 </select>
@@ -332,7 +339,6 @@
                     type="text"
                     id="drone-name"
                     placeholder="Введите уникальное имя"
-                    required
                     pattern="[A-Za-zА-Яа-я0-9\s]{3,20}"
                     title="От 3 до 20 символов (буквы, цифры, пробелы)">
             </div>
@@ -349,12 +355,12 @@
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>Регистрация дрона...</p>
+                <p>Обновление данных дрона...</p>
             </div>
 
             <div class="error-message" id="errorMessage"></div>
 
-            <button type="submit" class="submit-btn" id="submitBtn">Зарегистрировать</button>
+            <button type="submit" class="submit-btn" id="submitBtn">Обновить данные дрона</button>
         </form>
     </div>
 
@@ -364,10 +370,11 @@
         const profileToggle = document.getElementById('profileToggle');
         const dropdownMenu = document.getElementById('dropdownMenu');
         const logoutBtn = document.getElementById('logoutBtn');
-        const form = document.getElementById('drone-registration-form');
+        const form = document.getElementById('drone-update-form');
         const photoUpload = document.getElementById('photo-upload');
         const previewImage = document.getElementById('previewImage');
         const removePhotoBtn = document.getElementById('removePhotoBtn');
+        const currentPhotoInfo = document.getElementById('currentPhotoInfo');
         const loadingElement = document.getElementById('loading');
         const errorMessageElement = document.getElementById('errorMessage');
         const submitBtn = document.getElementById('submitBtn');
@@ -375,9 +382,16 @@
         const descriptionField = document.getElementById('drone-description');
         const charCountElement = document.getElementById('char-count');
 
-        // Текущий пользователь
+        // Текущий пользователь и данные дрона
         let currentUser = null;
         let droneModels = [];
+        let currentDrone = null;
+
+        // Получение ID дрона из URL
+        function getDroneIdFromUrl() {
+            const urlParams = new URLSearchParams(window.location.search);
+            return urlParams.get('drone_id');
+        }
 
         // Функция для показа уведомлений
         function showNotification(message, type = 'success') {
@@ -475,6 +489,64 @@
             }
         }
 
+        // Получение данных дрона
+        async function fetchDroneDetails(droneId) {
+            const token = localStorage.getItem('authToken');
+            if (!token) {
+                return null;
+            }
+
+            try {
+                const response = await fetch(`http://localhost:8000/drones/${droneId}`, {
+                    method: 'GET',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.status === 401) {
+                    localStorage.removeItem('authToken');
+                    showNotification('Сессия истекла', 'error');
+                    setTimeout(() => window.location.href = 'login.html', 2000);
+                    return null;
+                }
+
+                if (!response.ok) {
+                    throw new Error('Ошибка при получении данных дрона');
+                }
+
+                return await response.json();
+            } catch (error) {
+                console.error('Ошибка:', error);
+                showNotification(error.message, 'error');
+                return null;
+            }
+        }
+
+        // Заполнение формы данными дрона
+        function populateFormWithDroneData(drone) {
+            // Заполняем модель
+            if (drone.model_id) {
+                modelSelect.value = drone.model_id;
+            }
+
+            // Заполняем имя
+            document.getElementById('drone-name').value = drone.title || '';
+
+            // Заполняем описание
+            descriptionField.value = drone.description || '';
+            charCountElement.textContent = descriptionField.value.length;
+
+            // Показываем текущее фото, если есть
+            if (drone.photo_url) {
+                previewImage.src = drone.photo_url;
+                previewImage.style.display = 'block';
+                currentPhotoInfo.style.display = 'block';
+            } else {
+                currentPhotoInfo.style.display = 'none';
+            }
+        }
+
         // Превью загруженного фото
         photoUpload.addEventListener('change', function(e) {
             const file = e.target.files[0];
@@ -484,6 +556,7 @@
                     previewImage.src = e.target.result;
                     previewImage.style.display = 'block';
                     removePhotoBtn.style.display = 'block';
+                    currentPhotoInfo.textContent = 'Новое фото (не сохранено)';
                 }
                 reader.readAsDataURL(file);
             }
@@ -494,6 +567,16 @@
             photoUpload.value = '';
             previewImage.style.display = 'none';
             removePhotoBtn.style.display = 'none';
+
+            // Если у дрона было фото, показываем информацию о текущем фото
+            if (currentDrone && currentDrone.photo_url) {
+                previewImage.src = currentDrone.photo_url;
+                previewImage.style.display = 'block';
+                currentPhotoInfo.textContent = 'Текущее фото загружено';
+                currentPhotoInfo.style.display = 'block';
+            } else {
+                currentPhotoInfo.style.display = 'none';
+            }
         }
 
         // Счетчик символов для описания
@@ -508,6 +591,14 @@
             if (!token) {
                 showNotification('Требуется авторизация', 'error');
                 setTimeout(() => window.location.href = 'login.html', 2000);
+                return;
+            }
+
+            // Получаем ID дрона из URL
+            const droneId = getDroneIdFromUrl();
+            if (!droneId) {
+                showNotification('ID дрона не указан', 'error');
+                setTimeout(() => window.location.href = 'user_home.html', 2000);
                 return;
             }
 
@@ -534,7 +625,7 @@
             });
         }
 
-        // Отправка формы регистрации дрона
+        // Отправка формы обновления дрона
         form.addEventListener('submit', async (e) => {
             e.preventDefault();
 
@@ -549,6 +640,7 @@
                 title: document.getElementById('drone-name').value,
                 description: descriptionField.value
             };
+
             const formData = new FormData();
             formData.append('drone_data', JSON.stringify(droneData));
             if (photoUpload.files[0]) {
@@ -556,10 +648,10 @@
             }
 
             try {
-                // Отправка запроса на сервер
                 const token = localStorage.getItem('authToken');
-                const response = await fetch('http://localhost:8000/drones/', {
-                    method: 'POST',
+                const droneId = getDroneIdFromUrl();
+                const response = await fetch(`http://localhost:8000/drones/${droneId}`, {
+                    method: 'PUT',
                     headers: {
                         'Authorization': `Bearer ${token}`
                     },
@@ -580,12 +672,13 @@
                 if (!response.ok) {
                     try {
                         const errorData = await response.json();
-                        throw new Error(errorData.detail || 'Ошибка при регистрации дрона');
+                        throw new Error(errorData.detail || 'Ошибка при обновлении дрона');
                     } catch (e) {
                         const errorText = await response.text();
-                        throw new Error(errorText || 'Ошибка при регистрации дрона');
+                        throw new Error(errorText || 'Ошибка при обновлении дрона');
                     }
                 }
+
                 // Проверяем, что ответ действительно PDF
                 const contentType = response.headers.get('content-type');
                 if (!contentType || !contentType.includes('application/pdf')) {
@@ -639,7 +732,7 @@
                 // Получаем имя файла из заголовка
                 const contentDisposition = response.headers.get('content-disposition');
                 let filename = getFilenameFromContentDisposition(contentDisposition);
-                console.log(filename);
+
                 // Если имя файла не найдено, используем значение по умолчанию
                 if (!filename) {
                     filename = `drone_certificate_${Date.now()}.pdf`;
@@ -666,18 +759,24 @@
                 // Освобождаем память
                 setTimeout(() => URL.revokeObjectURL(pdfUrl), 100);
 
-                showNotification(`Дрон успешно зарегистрирован! Сертификат "${filename}" скачивается...`);
-
-                // Очищаем форму через 2 секунды
+                showNotification(`Данные дрона успешно обновлены! Новый сертификат "${filename}" скачивается...`);
+                
                 setTimeout(() => {
                     form.reset();
                     removePhoto();
                     charCountElement.textContent = '0';
+                    
+                    showNotification('Переход на главную страницу...', 'success');
+                    
+                    setTimeout(() => {
+                        window.location.href = 'user_home.html';
+                    }, 1000);
                 }, 2000);
+
 
             } catch (error) {
                 // Обработка ошибок
-                console.error('Ошибка регистрации дрона:', error);
+                console.error('Ошибка обновления дрона:', error);
                 errorMessageElement.textContent = `Ошибка: ${error.message}`;
                 errorMessageElement.style.display = 'block';
                 submitBtn.disabled = false;

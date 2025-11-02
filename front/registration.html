@@ -172,9 +172,9 @@
                             type="text"
                             id="id_card_number"
                             required
-                            pattern="\d{5}"
-                            title="Ровно 5 цифр"
-                            placeholder="Номер (5 цифр)">
+                            pattern="\d{4}"
+                            title="Ровно 4 цифры"
+                            placeholder="Номер (4 цифры)">
                     </div>
                 </div>
             </div>
@@ -264,24 +264,13 @@
                 alert('Пожалуйста, заполните все обязательные поля корректно!');
                 return;
             }
-
-            // Calculate age from birth date
-            const birthDate = new Date(birthDateInput.value);
-            const today = new Date();
-            let calculatedAge = today.getFullYear() - birthDate.getFullYear();
-            const monthDiff = today.getMonth() - birthDate.getMonth();
-            
-            if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-                calculatedAge--;
-            }
-            
             const userData = {
                 last_name: document.getElementById('lastname').value,
                 first_name: document.getElementById('firstname').value,
                 middle_name: document.getElementById('middlename').value || null,
                 login: document.getElementById('login').value,
                 password: password.value,
-                age: calculatedAge,
+                birth_date:  birthDateInput.value,
                 id_card_series: parseInt(document.getElementById('id_card_series').value),
                 id_card_number: parseInt(document.getElementById('id_card_number').value)
             };

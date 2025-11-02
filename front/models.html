@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Панель администратора</title>
+    <title>Панель администратора - Модели</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.8.1/font/bootstrap-icons.css">
     <style>
@@ -21,7 +21,7 @@
             box-shadow: 0 2px 10px rgba(0,0,0,0.1);
         }
 
-        .mission-card {
+        .model-card {
             background: white;
             border-radius: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.1);
@@ -30,37 +30,45 @@
             width: 100%;
         }
 
-        .mission-card:hover {
+        .model-card:hover {
             transform: translateY(-3px);
             box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
-        .download-btn {
-            background: var(--primary-color);
-            color: white !important;
-            padding: 0.5rem 1.5rem;
-            border-radius: 8px;
-            text-decoration: none;
-            transition: background 0.3s;
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .download-btn:hover {
-            background: var(--hover-color);
-        }
-
-        .mission-content {
+        .model-content {
             padding: 1.5rem;
+        }
+
+        .model-info {
+            flex-grow: 1;
+        }
+
+        .spec-item {
             display: flex;
             justify-content: space-between;
             align-items: center;
+            padding: 0.5rem 0;
+            border-bottom: 1px solid #f0f0f0;
         }
 
-        .mission-info {
-            flex-grow: 1;
-            margin-right: 2rem;
+        .spec-item:last-child {
+            border-bottom: none;
+        }
+
+        .spec-label {
+            font-weight: 600;
+            color: #555;
+        }
+
+        .spec-value {
+            color: #333;
+        }
+
+        .description-box {
+            background: #f8f9fa;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1rem;
         }
 
         .notification {
@@ -115,29 +123,6 @@
             100% { transform: rotate(360deg); }
         }
 
-        .mission-status {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-            font-weight: 500;
-        }
-
-        .status-completed {
-            background-color: #e8f5e9;
-            color: #2e7d32;
-        }
-
-        .status-pending {
-            background-color: #fff8e1;
-            color: #f57f17;
-        }
-
-        .status-cancelled {
-            background-color: #ffebee;
-            color: #c62828;
-        }
-
         .user-info {
             display: flex;
             align-items: center;
@@ -155,6 +140,15 @@
             color: var(--primary-color);
             font-weight: bold;
         }
+
+        .model-title {
+            color: var(--primary-color);
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 2px solid var(--primary-color);
+        }
     </style>
 </head>
 <body>
@@ -166,8 +160,8 @@
                         onclick="window.location.href='regmodevV2.html'">
                     <i class="bi bi-plus-lg me-2"></i>Добавить модель
                 </button>
-                <button class="btn btn-light" onclick="window.location.href='models.html'">
-                    <i class="bi bi-list me-2"></i>Модели
+                <button class="btn btn-light" onclick="window.location.href='manager_home.html'">
+                    <i class="bi bi-list me-2"></i>Полеты
                 </button>
             </div>
 
@@ -186,13 +180,14 @@
     <!-- Основной контент -->
     <div class="container-fluid py-4">
         <div class="d-flex justify-content-between align-items-center mb-4">
-            <h2>Все полеты</h2>
+            <h2>Все модели</h2>
             <div class="d-flex gap-2">
+                <!-- Фильтры можно добавить позже при необходимости -->
             </div>
         </div>
 
-        <!-- Список миссий -->
-        <div class="row" id="missionsContainer">
+        <!-- Список моделей -->
+        <div class="row" id="modelsContainer">
             <div class="col-12 loading-container">
                 <div class="spinner"></div>
             </div>
@@ -210,7 +205,7 @@
     <script>
         // Текущий пользователь
         let currentUser = null;
-        let missions = [];
+        let models = [];
         let currentPage = 1;
         const itemsPerPage = 5;
 
@@ -218,10 +213,8 @@
         const adminNameElement = document.getElementById('adminName');
         const userAvatarElement = document.getElementById('userAvatar');
         const logoutBtn = document.getElementById('logoutBtn');
-        const missionsContainer = document.getElementById('missionsContainer');
+        const modelsContainer = document.getElementById('modelsContainer');
         const paginationElement = document.getElementById('pagination');
-        const statusFilter = document.getElementById('statusFilter');
-        const dateFilter = document.getElementById('dateFilter');
 
         // Функция для показа уведомлений
         function showNotification(message, type = 'success') {
@@ -285,26 +278,15 @@
             }
         }
 
-        // Получение списка миссий
-        async function fetchMissions(page = 1, status = '', date = '') {
+        // Получение списка моделей
+        async function fetchModels() {
             const token = localStorage.getItem('authToken');
             if (!token) {
-                return { missions: [], total: 0 };
+                return [];
             }
 
             try {
-                // Формируем URL с параметрами
-                let url = `http://localhost:8000/mission/all`;
-
-                if (status) {
-                    url += `&status=${status}`;
-                }
-
-                if (date) {
-                    url += `&date=${date}`;
-                }
-
-                const response = await fetch(url, {
+                const response = await fetch('http://localhost:8000/models', {
                     method: 'GET',
                     headers: {
                         'Authorization': `Bearer ${token}`
@@ -315,93 +297,45 @@
                     localStorage.removeItem('authToken');
                     showNotification('Сессия истекла', 'error');
                     setTimeout(() => window.location.href = 'login.html', 2000);
-                    return { missions: [], total: 0 };
+                    return [];
                 }
 
                 if (!response.ok) {
-                    throw new Error('Ошибка при получении списка миссий');
+                    throw new Error('Ошибка при получении списка моделей');
                 }
 
                 return await response.json();
             } catch (error) {
                 console.error('Ошибка:', error);
                 showNotification(error.message, 'error');
-                return { missions: [], total: 0 };
+                return [];
             }
         }
 
-        // Форматирование даты
-        function formatDate(dateString) {
-            const date = new Date(dateString);
-            return new Intl.DateTimeFormat('ru-RU', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-                hour: '2-digit',
-                minute: '2-digit'
-            }).format(date);
-        }
-
-        // Отображение статуса
-        function getStatusBadge(status) {
-            let badgeClass = '';
-            let statusText = '';
-
-            switch(status) {
-                case 'completed':
-                    badgeClass = 'status-completed';
-                    statusText = 'Завершён';
-                    break;
-                case 'pending':
-                    badgeClass = 'status-pending';
-                    statusText = 'Ожидает';
-                    break;
-                case 'cancelled':
-                    badgeClass = 'status-cancelled';
-                    statusText = 'Отменён';
-                    break;
-                default:
-                    badgeClass = 'status-pending';
-                    statusText = 'Неизвестен';
-            }
-
-            return `<span class="mission-status ${badgeClass}">${statusText}</span>`;
-        }
-
-        // Создание карточки миссии
-        function createMissionCard(mission) {
+        // Создание карточки модели
+        function createModelCard(model) {
             const card = document.createElement('div');
             card.className = 'col-12';
 
             card.innerHTML = `
-                <div class="mission-card">
-                    <div class="mission-content">
-                        <div class="mission-info">
-                            <div class="mb-2 d-flex align-items-center">
-                                <span class="fw-bold me-2">Пользователь:</span>
-                                ${mission.user_last_name} ${mission.user_first_name}
+                <div class="model-card">
+                    <div class="model-content">
+                        <div class="model-title">${model.title}</div>
+                        <div class="model-info">
+                            <div class="spec-item">
+                                <span class="spec-label">Вес:</span>
+                                <span class="spec-value">${model.weight} кг</span>
                             </div>
-                            <div class="mb-2">
-                                <span class="fw-bold me-2">Бортовой номер:</span>
-                                ${mission.hull_number}
+                            <div class="spec-item">
+                                <span class="spec-label">Максимальная дальность:</span>
+                                <span class="spec-value">${model.max_range} км</span>
                             </div>
-                           
-                            <div class="mb-2">
-                                <span class="fw-bold me-2">Время полета:</span>
-                                ${formatTime(mission.mission_time)}
+                            ${model.description ? `
+                            <div class="description-box">
+                                <strong>Описание:</strong>
+                                <p class="mb-0 mt-1">${model.description}</p>
                             </div>
-                            <div>
-                                <span class="fw-bold me-2">Файл:</span>
-                                ${mission.file_title || 'Без файла'}
-                            </div>
-                        </div>
-                       <div class="mission-actions">
-                            <button class="download-btn download-route-btn" data-id="${mission.id}">
-                                <i class="bi bi-download"></i>Маршрут
-                            </button>
-                            <button class="download-btn download-btn-drone download-drone-btn" data-id="${mission.id}">
-                                <i class="bi bi-download"></i>Дрон
-                            </button>
+                            ` : ''}
                         </div>
                     </div>
                 </div>
@@ -410,141 +344,32 @@
             return card;
         }
 
-        // Отображение миссий
-        function renderMissions(missions) {
-            missionsContainer.innerHTML = '';
+        // Отображение моделей
+        function renderModels(models) {
+            modelsContainer.innerHTML = '';
 
-            if (missions.length === 0) {
-                missionsContainer.innerHTML = `
+            if (models.length === 0) {
+                modelsContainer.innerHTML = `
                     <div class="col-12 text-center py-5">
-                        <h4>Миссии не найдены</h4>
-                        <p class="text-muted">Попробуйте изменить параметры фильтра</p>
+                        <h4>Модели не найдены</h4>
+                        <p class="text-muted">Добавьте первую модель</p>
                     </div>
                 `;
                 return;
             }
 
-            missions.forEach(mission => {
-                const card = createMissionCard(mission);
-                missionsContainer.appendChild(card);
+            models.forEach(model => {
+                const card = createModelCard(model);
+                modelsContainer.appendChild(card);
             });
 
-            document.querySelectorAll('.download-route-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const missionId = this.getAttribute('data-id');
-                    downloadMissionRoute(missionId);
-                });
-            });
-
-            document.querySelectorAll('.download-drone-btn').forEach(btn => {
-                btn.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    const missionId = this.getAttribute('data-id');
-                    downloadDroneFile(missionId);
-                });
-            });
-
+            // Обновляем пагинацию
+            renderPagination(models.length);
         }
-        async function downloadMissionRoute(missionId) {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                showNotification('Требуется авторизация', 'error');
-                return;
-            }
-
-            try {
-                showNotification('Загрузка файла дрона...', 'success');
-
-                const response = await fetch(`http://localhost:8000/mission/${missionId}/file`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка при загрузке файла миссии');
-                }
-
-                const pdfBlob = await response.blob();
-                
-                const filename = `mission_${missionId}_${Date.now()}.pdf`;
-                
-                const fileUrl = URL.createObjectURL(pdfBlob);
-
-                const downloadLink = document.createElement('a');
-                downloadLink.href = fileUrl;
-                downloadLink.download = filename;
-                downloadLink.style.display = 'none';
-
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                setTimeout(() => URL.revokeObjectURL(fileUrl), 100);
-                
-                showNotification('Файл миссии успешно скачан!');
-
-            } catch (error) {
-                console.error('Ошибка скачивания файла миссии:', error);
-                showNotification(error.message, 'error');
-            }
-        }
-        async function downloadDroneFile(missionId) {
-            const token = localStorage.getItem('authToken');
-            if (!token) {
-                showNotification('Требуется авторизация', 'error');
-                return;
-            }
-
-            try {
-                showNotification('Загрузка файла дрона...', 'success');
-
-                const response = await fetch(`http://localhost:8000/drones/${missionId}/file`, {
-                    method: 'GET',
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-
-                if (!response.ok) {
-                    throw new Error('Ошибка при загрузке файла дрона');
-                }
-
-                const pdfBlob = await response.blob();
-                
-                const filename = `drone_${missionId}_${Date.now()}.pdf`;
-                
-                const fileUrl = URL.createObjectURL(pdfBlob);
-
-                const downloadLink = document.createElement('a');
-                downloadLink.href = fileUrl;
-                downloadLink.download = filename;
-                downloadLink.style.display = 'none';
-
-                document.body.appendChild(downloadLink);
-                downloadLink.click();
-                document.body.removeChild(downloadLink);
-
-                setTimeout(() => URL.revokeObjectURL(fileUrl), 100);
-                
-                showNotification('Файл дрона успешно скачан!');
-
-            } catch (error) {
-                console.error('Ошибка скачивания файла дрона:', error);
-                showNotification(error.message, 'error');
-            }
-        }
-                function formatTime(timeString) {
-                    if (!timeString) return '';
-                    const timeParts = timeString.split(':');
-                    return `${timeParts[0]}:${timeParts[1]}`;
-                }
 
         // Отображение пагинации
         function renderPagination(totalItems) {
-            const totalPages = 1;
+            const totalPages = Math.ceil(totalItems / itemsPerPage);
             paginationElement.innerHTML = '';
 
             if (totalPages <= 1) return;
@@ -557,7 +382,7 @@
                 e.preventDefault();
                 if (currentPage > 1) {
                     currentPage--;
-                    loadMissions();
+                    loadModels();
                 }
             });
             paginationElement.appendChild(prevBtn);
@@ -570,7 +395,7 @@
                 pageItem.addEventListener('click', (e) => {
                     e.preventDefault();
                     currentPage = i;
-                    loadMissions();
+                    loadModels();
                 });
                 paginationElement.appendChild(pageItem);
             }
@@ -583,27 +408,33 @@
                 e.preventDefault();
                 if (currentPage < totalPages) {
                     currentPage++;
-                    loadMissions();
+                    loadModels();
                 }
             });
             paginationElement.appendChild(nextBtn);
         }
 
-        // Загрузка миссий
-        async function loadMissions() {
-            missionsContainer.innerHTML = `
+        // Загрузка моделей
+        async function loadModels() {
+            modelsContainer.innerHTML = `
                 <div class="col-12 loading-container">
                     <div class="spinner"></div>
                 </div>
             `;
 
             try {
-                const data = await fetchMissions(currentPage);
-                console.log(data);
-                renderMissions(data);
+                const data = await fetchModels();
+                models = data;
+                
+                // Применяем пагинацию
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedModels = models.slice(startIndex, endIndex);
+                
+                renderModels(paginatedModels);
             } catch (error) {
-                console.error('Ошибка загрузки миссий:', error);
-                missionsContainer.innerHTML = `
+                console.error('Ошибка загрузки моделей:', error);
+                modelsContainer.innerHTML = `
                     <div class="col-12 text-center py-5">
                         <h4>Ошибка загрузки данных</h4>
                         <p class="text-muted">${error.message || 'Попробуйте позже'}</p>
@@ -636,19 +467,8 @@
                 adminNameElement.textContent = 'Администратор';
             }
 
-            // Загружаем миссии
-            await loadMissions();
-
-            // Добавляем обработчики фильтров
-            statusFilter.addEventListener('change', () => {
-                currentPage = 1;
-                loadMissions();
-            });
-
-            dateFilter.addEventListener('change', () => {
-                currentPage = 1;
-                loadMissions();
-            });
+            // Загружаем модели
+            await loadModels();
         }
 
         // Выход из системы
@@ -658,7 +478,6 @@
             window.location.href = 'login.html';
         });
 
-        // Запуск инициализации при загрузке страницы
         document.addEventListener('DOMContentLoaded', initPage);
     </script>
 </body>
